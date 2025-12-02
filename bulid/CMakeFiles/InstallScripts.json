@@ -1,9 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/Frillion/Projects/Personal/VulkanRendering/bulid/cmake_install.cmake",
-		"/home/Frillion/Projects/Personal/VulkanRendering/bulid/Renderer/cmake_install.cmake",
-		"/home/Frillion/Projects/Personal/VulkanRendering/bulid/Application/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

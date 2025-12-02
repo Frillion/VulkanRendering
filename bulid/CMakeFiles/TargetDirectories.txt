@@ -1,8 +1,0 @@
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/CMakeFiles/edit_cache.dir
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/CMakeFiles/rebuild_cache.dir
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/Renderer/CMakeFiles/Renderer.dir
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/Renderer/CMakeFiles/edit_cache.dir
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/Renderer/CMakeFiles/rebuild_cache.dir
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/Application/CMakeFiles/app.dir
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/Application/CMakeFiles/edit_cache.dir
-/home/Frillion/Projects/Personal/VulkanRendering/bulid/Application/CMakeFiles/rebuild_cache.dir
