@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.13)
 
-add_executable(${PROJECT_NAME} "main.cpp")
+add_library(${PROJECT_NAME} "window.cpp")
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
