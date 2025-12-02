@@ -6,6 +6,10 @@ find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${CMAKE_SOURCE_DIR}/Renderer/include
+)
+
 target_link_directories(${PROJECT_NAME} 
     PUBLIC ${Vulkan_INCLUDE_DIRS} 
     PUBLIC ${glfw3_INCLUDE_DIRS} 
