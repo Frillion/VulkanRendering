@@ -9,6 +9,8 @@ namespace FRI{
 class WindowManager{
 public:
     WindowManager(int width, int height, const std::string& name);
+    bool window_open();
+    void refresh();
     ~WindowManager();
 private:
     GLFWwindow* main_window;

@@ -8,5 +8,6 @@ target_include_directories(app
     PRIVATE ${CMAKE_SOURCE_DIR}/Renderer/include/
 )
 
-target_link_directories(app PRIVATE ${CMAKE_SOURCE_DIR}../build/)
+target_link_directories(app PRIVATE ${CMAKE_SOURCE_DIR}/build)
+
 target_link_libraries(app Renderer)
