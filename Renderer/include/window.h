@@ -9,6 +9,10 @@ namespace FRI{
 class WindowManager{
 public:
     WindowManager(int width, int height, const std::string& name);
+
+    WindowManager(const WindowManager&) = delete;
+    WindowManager& operator=(const WindowManager&) = delete;
+
     bool window_open();
     void refresh();
     ~WindowManager();
