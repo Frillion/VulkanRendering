@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-add_library(${PROJECT_NAME} STATIC "window.cpp" "graphics_pipeline.cpp")
+add_library(${PROJECT_NAME} STATIC "window.cpp" "graphics_pipeline.cpp" "device.cpp")
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)

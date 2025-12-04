@@ -2,6 +2,7 @@
 #define WINDOW_MANAGER_HEADER
 
 #include <GLFW/glfw3.h>
+#include <cstdint>
 #include <stdexcept>
 
 namespace FRI{
@@ -18,7 +19,7 @@ public:
     ~WindowManager();
 private:
     GLFWwindow* main_window;
-    int height,width;
+    uint32_t height,width;
     float fheight,fwidth;
 };
 

@@ -14,6 +14,7 @@ WindowManager::WindowManager(int width, int height, const std::string& name): wi
     if(glfwInit() == -1){ throw std::runtime_error("Failed To Initialize GLFW"); }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     main_window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
 
     if(!main_window){ throw std::runtime_error("Failed To Create Window"); }
