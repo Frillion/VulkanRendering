@@ -90,6 +90,64 @@ bool Device::check_validation_layers(){
     return true;
 }
 
+void Device::pick_physical_device(){
+    uint32_t device_count = 0;
+    vkEnumeratePhysicalDevices(instance, &device_count, nullptr);
+
+    if(device_count == 0){
+        throw std::runtime_error("Failed To Find Vulkan Compatible Graphics Device");
+    }
+
+    std::vector<VkPhysicalDevice> devices(device_count);
+    vkEnumeratePhysicalDevices(instance, &device_count, devices.data());
+
+    for(const auto& device:devices){
+        if(suitable_device(device)){
+            physical_device = device;
+            break;
+        }
+    }
+
+    if(physical_device == VK_NULL_HANDLE){
+        throw std::runtime_error("Failed To Find Vulkan Compatible Graphics Device");
+    }
+}
+
+bool Device::suitable_device(VkPhysicalDevice device){
+    QueueFamilyIndecies indecies = find_queue_families(device);
+
+    VkPhysicalDeviceProperties2 device_properties;
+    VkPhysicalDeviceFeatures2 device_features;
+    vkGetPhysicalDeviceProperties2(device, &device_properties);
+    vkGetPhysicalDeviceFeatures2(device, &device_features);
+
+    return device_properties.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+    device_features.features.geometryShader && indecies.graphics_family.has_value();
+}
+
+Device::QueueFamilyIndecies Device::find_queue_families(VkPhysicalDevice device){
+    QueueFamilyIndecies indecies;
+
+    uint32_t queue_family = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties2(device, &queue_family, nullptr);
+
+    std::vector<VkQueueFamilyProperties2> queue_families;
+    vkGetPhysicalDeviceQueueFamilyProperties2(device, &queue_family, queue_families.data());
+
+    size_t i = 0;
+    for(const auto& queue_family:queue_families){
+        if(queue_family.queueFamilyProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT){
+            indecies.graphics_family = i;
+        }
+
+        if(indecies.is_complete()) break;
+
+        i++;
+    }
+
+    return indecies;
+}
+
 Device::~Device(){
     vkDestroyInstance(instance, nullptr);
 }

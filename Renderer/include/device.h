@@ -1,6 +1,7 @@
 #ifndef DEVICE_HEADER
 #define DEVICE_HEADER
 #include "window.h"
+#include <optional>
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
@@ -12,9 +13,21 @@ public:
     Device(const std::string& application_name);
     ~Device();
 private:
+    struct QueueFamilyIndecies{
+        std::optional<uint32_t> graphics_family;
+        bool is_complete(){
+            return graphics_family.has_value();
+        }
+    };
+
     VkInstance instance;
+    VkPhysicalDevice physical_device = VK_NULL_HANDLE;
+
     void create_instance(const std::string& application_name);
     bool check_validation_layers();
+    bool suitable_device(VkPhysicalDevice device);
+    QueueFamilyIndecies find_queue_families(VkPhysicalDevice device);
+    void pick_physical_device();
 
     const std::vector<const char*> validation_layers = {
         "VK_LAYER_KHRONOS_validation"
