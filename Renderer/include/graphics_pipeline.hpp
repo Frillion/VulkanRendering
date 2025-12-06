@@ -1,6 +1,7 @@
 #ifndef PIPELINE_HEADER
 #define PIPELINE_HEADER
 
+#include "device.h"
 #include <string>
 #include <vector>
 namespace FRI{

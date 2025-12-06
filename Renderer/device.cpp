@@ -10,6 +10,8 @@ namespace FRI{
 
 Device::Device(const std::string& application_name){
     create_instance(application_name);
+    pick_physical_device();
+    create_logical_device();
 }
 
 void Device::create_instance(const std::string& application_name){
@@ -63,6 +65,42 @@ void Device::create_instance(const std::string& application_name){
     for (const auto& extension : extensions) {
         std::cout << '\t' << extension.extensionName << '\n';
     }
+}
+
+void Device::create_logical_device(){
+    QueueFamilyIndecies indecies = find_queue_families(physical_device);
+
+    // Specify Queues We Want To Interface With
+    float queue_priority = 1.0f;// Queue priority from 0.0 - 1.0 for command buffer scheduling
+    VkDeviceQueueCreateInfo queue_create_info{};
+    queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queue_create_info.queueFamilyIndex = indecies.graphics_family.value();
+    queue_create_info.queueCount = 1;
+    queue_create_info.pQueuePriorities = &queue_priority;
+    
+    // Select GPU Features We Want To Use
+    VkPhysicalDeviceFeatures device_features{};
+
+    // Logical Device Creation Information
+    VkDeviceCreateInfo device_create_info{};
+    device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    device_create_info.pQueueCreateInfos = &queue_create_info;
+    device_create_info.queueCreateInfoCount = 1;
+    device_create_info.pEnabledFeatures = &device_features;
+    device_create_info.enabledExtensionCount = 0;
+
+    if (enable_validation_layers) {
+        device_create_info.enabledLayerCount = static_cast<uint32_t>(validation_layers.size());
+        device_create_info.ppEnabledLayerNames = validation_layers.data();
+    } else {
+        device_create_info.enabledLayerCount = 0;
+    }
+
+    if(vkCreateDevice(physical_device, &device_create_info, nullptr, &logical_device) != VK_SUCCESS){
+        throw std::runtime_error("Failed To Create Logical Device");
+    }
+
+    vkGetDeviceQueue(logical_device, indecies.graphics_family.value(), 0, &graphics_queue);
 }
 
 bool Device::check_validation_layers(){
@@ -149,6 +187,7 @@ Device::QueueFamilyIndecies Device::find_queue_families(VkPhysicalDevice device)
 }
 
 Device::~Device(){
+    vkDestroyDevice(logical_device, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
 
