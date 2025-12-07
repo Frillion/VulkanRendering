@@ -1,15 +1,18 @@
 #include "device.h"
+#include "window.h"
 #include <GLFW/glfw3.h>
 #include <cstdint>
 #include <iostream>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 namespace FRI{
 
-Device::Device(const std::string& application_name){
+Device::Device(WindowManager& window,const std::string& application_name):window(window){
     create_instance(application_name);
+    create_surface();
     pick_physical_device();
     create_logical_device();
 }
@@ -70,24 +73,28 @@ void Device::create_instance(const std::string& application_name){
 void Device::create_logical_device(){
     QueueFamilyIndecies indecies = find_queue_families(physical_device);
 
-    // Specify Queues We Want To Interface With
+    std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
+    std::set<uint32_t> unique_queue_families = {indecies.graphics_family.value(),indecies.presentation_family.value()};
     float queue_priority = 1.0f;// Queue priority from 0.0 - 1.0 for command buffer scheduling
-    VkDeviceQueueCreateInfo queue_create_info{};
-    queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queue_create_info.queueFamilyIndex = indecies.graphics_family.value();
-    queue_create_info.queueCount = 1;
-    queue_create_info.pQueuePriorities = &queue_priority;
-    
+    for(uint32_t queue_family : unique_queue_families){
+        VkDeviceQueueCreateInfo queue_create_info{};
+        queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queue_create_info.queueFamilyIndex = queue_family; 
+        queue_create_info.queueCount = 1;
+        queue_create_info.pQueuePriorities = &queue_priority;
+    }
+
     // Select GPU Features We Want To Use
     VkPhysicalDeviceFeatures device_features{};
 
     // Logical Device Creation Information
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_create_info.pQueueCreateInfos = &queue_create_info;
-    device_create_info.queueCreateInfoCount = 1;
+    device_create_info.pQueueCreateInfos = queue_create_infos.data();
+    device_create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
     device_create_info.pEnabledFeatures = &device_features;
-    device_create_info.enabledExtensionCount = 0;
+    device_create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
+    device_create_info.ppEnabledExtensionNames = device_extensions.data();
 
     if (enable_validation_layers) {
         device_create_info.enabledLayerCount = static_cast<uint32_t>(validation_layers.size());
@@ -101,6 +108,7 @@ void Device::create_logical_device(){
     }
 
     vkGetDeviceQueue(logical_device, indecies.graphics_family.value(), 0, &graphics_queue);
+    vkGetDeviceQueue(logical_device, indecies.presentation_family.value(), 0, &presentation_queue);
 }
 
 bool Device::check_validation_layers(){
@@ -159,8 +167,34 @@ bool Device::suitable_device(VkPhysicalDevice device){
     vkGetPhysicalDeviceProperties2(device, &device_properties);
     vkGetPhysicalDeviceFeatures2(device, &device_features);
 
-    return device_properties.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-    device_features.features.geometryShader && indecies.graphics_family.has_value();
+    bool extensions_supported = check_extension_support(device);
+
+    bool swap_chain_adequate = false;
+    if(extensions_supported){
+        SwapChainSupportDetails swap_chain_details = query_swapchain_support(device);
+        swap_chain_adequate = !swap_chain_details.formats.empty() && !swap_chain_details.present_modes.empty();
+    }
+
+    return indecies.is_complete() &&
+    extensions_supported &&
+    swap_chain_adequate &&
+    device_properties.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+}
+
+bool Device::check_extension_support(VkPhysicalDevice device){
+    uint32_t extension_count;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
+
+    std::vector<VkExtensionProperties> available_extensions(extension_count);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, available_extensions.data());
+
+    std::set<std::string> required_extensions(device_extensions.begin(), device_extensions.end());
+
+    for(const auto& extension : available_extensions){
+        required_extensions.erase(extension.extensionName);
+    }
+
+    return required_extensions.empty();
 }
 
 Device::QueueFamilyIndecies Device::find_queue_families(VkPhysicalDevice device){
@@ -178,6 +212,13 @@ Device::QueueFamilyIndecies Device::find_queue_families(VkPhysicalDevice device)
             indecies.graphics_family = i;
         }
 
+        VkBool32 presentation_support = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentation_support);
+
+        if(presentation_support){
+            indecies.presentation_family = i;
+        }
+
         if(indecies.is_complete()) break;
 
         i++;
@@ -186,8 +227,36 @@ Device::QueueFamilyIndecies Device::find_queue_families(VkPhysicalDevice device)
     return indecies;
 }
 
+Device::SwapChainSupportDetails Device::query_swapchain_support(VkPhysicalDevice device){
+    SwapChainSupportDetails details;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &details.capabilities);
+
+    uint32_t format_count;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, nullptr);
+
+    if(format_count != 0){
+        details.formats.resize(format_count);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, details.formats.data());
+    }
+
+    uint32_t present_mode_count;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, nullptr);
+    
+    if(present_mode_count != 0){
+        details.present_modes.resize(present_mode_count);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, details.present_modes.data());
+    }
+
+    return details;
+}
+
+void Device::create_surface(){
+    window.create_surface(instance, &surface);
+}
+
 Device::~Device(){
     vkDestroyDevice(logical_device, nullptr);
+    vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
 

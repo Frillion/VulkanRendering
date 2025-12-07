@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <cstdint>
 #include <stdexcept>
+#include <vulkan/vulkan.hpp>
 
 namespace FRI{
 
@@ -15,6 +16,7 @@ public:
     WindowManager& operator=(const WindowManager&) = delete;
 
     bool window_open();
+    void create_surface(VkInstance instance,VkSurfaceKHR* surface);
     void refresh();
     ~WindowManager();
 private:

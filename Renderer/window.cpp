@@ -1,9 +1,11 @@
 #include "window.h"
 
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 #include <string>
+
 namespace FRI{
 
 inline void error_callback(int error, const char* description) {
@@ -21,6 +23,12 @@ WindowManager::WindowManager(int width, int height, const std::string& name): wi
 
     glfwSetWindowUserPointer(main_window, this);
     glfwSwapInterval(1);
+}
+
+void WindowManager::create_surface(VkInstance instance,VkSurfaceKHR* surface){
+    if(glfwCreateWindowSurface(instance, main_window, nullptr, surface) != VK_SUCCESS){
+        throw std::runtime_error("Failed To Create Window Surface");
+    }
 }
 
 bool WindowManager::window_open(){
